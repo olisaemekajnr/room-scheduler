@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Room Details - Room Scheduler</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .metric-box {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+        }
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        .metric-label {
+            font-size: 0.95rem;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" style="display: inline-block; margin-bottom: 1rem; color: var(--text-secondary);">&larr; Back to Dashboard</a>
+        
+        <div class="card">
+            <h1>{{ room.name }}</h1>
+            
+            <div class="metric-box">
+                <div class="metric-value">{{ occupancy }}%</div>
+                <div class="metric-label">Occupancy (Next 5 Days tracking 09:00 - 18:00)</div>
+            </div>
+            
+            <h2>All Time Bookings for Room</h2>
+            {% if bookings %}
+            <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                <tr style="border-bottom: 2px solid var(--border-color);">
+                    <th style="padding: 0.5rem;">Date</th>
+                    <th style="padding: 0.5rem;">Time</th>
+                </tr>
+                {% for b in bookings %}
+                <tr style="border-bottom: 1px solid rgba(0,0,0,0.05);">
+                    <td style="padding: 0.5rem;">{{ b.day_id }}</td>
+                    <td style="padding: 0.5rem;">{{ b.start_time }} - {{ b.end_time }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+            {% else %}
+            <p style="color: var(--text-secondary);">This room has no bookings yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

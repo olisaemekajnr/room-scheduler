@@ -33,7 +33,7 @@
             <ul class="room-list">
                 {% for room in rooms %}
                 <li style="display: flex; justify-content: space-between; align-items: center;">
-                    <span class="room-name">{{ room.name }}</span>
+                    <a href="/room/{{ room.id }}" class="room-name" style="color: var(--primary-color); text-decoration: none; font-weight: 500;">{{ room.name }}</a>
                     {% if room.created_by == user.user_id %}
                     <form method="POST" action="/" style="display:inline; margin: 0;" onsubmit="return confirm('Definitively delete this room? This will fail if there are active bookings.');">
                         <input type="hidden" name="form_type" value="delete_room">
@@ -75,6 +75,33 @@
                 </div>
                 <button type="submit">Create Booking</button>
             </form>
+        </div>
+
+        <div class="card">
+            <h2>Filter Bookings by Single Day</h2>
+            <form method="GET" action="/" style="margin-bottom: 1.5rem; display: flex; gap: 1rem;">
+                <input type="date" name="day_filter" value="{{ day_filter or '' }}" required style="margin-bottom: 0;">
+                <button type="submit" style="white-space: nowrap;">Filter</button>
+            </form>
+            
+            {% if day_filter %}
+                {% if day_filter_bookings %}
+                <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                    <tr style="border-bottom: 2px solid var(--border-color);">
+                        <th style="padding: 0.5rem;">Room</th>
+                        <th style="padding: 0.5rem;">Time</th>
+                    </tr>
+                    {% for b in day_filter_bookings %}
+                    <tr style="border-bottom: 1px solid rgba(0,0,0,0.05);">
+                        <td style="padding: 0.5rem;">{{ b.room_name }}</td>
+                        <td style="padding: 0.5rem;">{{ b.start_time }} - {{ b.end_time }}</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+                {% else %}
+                <p style="color: var(--text-secondary);">No bookings found for {{ day_filter }}.</p>
+                {% endif %}
+            {% endif %}
         </div>
 
         <div class="card">

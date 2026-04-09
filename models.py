@@ -166,3 +166,66 @@ def delete_room(room_id, user_id):
 
     room_ref.delete()
     return True, "Room deleted successfully."
+
+from datetime import datetime, timedelta
+
+def get_all_bookings_for_day(date_str):
+    results = []
+    room_refs = [doc.reference for doc in db.collection('rooms').stream()]
+    for room_ref in room_refs:
+        day_doc = room_ref.collection('days').document(date_str).get()
+        if day_doc.exists:
+            bookings = day_doc.reference.collection('bookings').stream()
+            for b_doc in bookings:
+                b_data = b_doc.to_dict()
+                b_data['booking_id'] = b_doc.id
+                results.append(b_data)
+    results.sort(key=lambda x: x.get('start_time', ''))
+    return results
+
+def get_room_bookings(room_id):
+    results = []
+    room_ref = db.collection('rooms').document(room_id)
+    if not room_ref.get().exists:
+        return []
+    days = room_ref.collection('days').stream()
+    for day_doc in days:
+        bookings = day_doc.reference.collection('bookings').stream()
+        for b_doc in bookings:
+            b_data = b_doc.to_dict()
+            b_data['booking_id'] = b_doc.id
+            results.append(b_data)
+    results.sort(key=lambda x: (x.get('day_id', ''), x.get('start_time', '')))
+    return results
+
+def get_room_occupancy(room_id, start_date_str, num_days=5):
+    start_dt = datetime.strptime(start_date_str, '%Y-%m-%d')
+    total_minutes_available = num_days * 9 * 60 
+    booked_minutes = 0
+    
+    room_ref = db.collection('rooms').document(room_id)
+    
+    for i in range(num_days):
+        current_date = (start_dt + timedelta(days=i)).strftime('%Y-%m-%d')
+        day_doc = room_ref.collection('days').document(current_date).get()
+        if day_doc.exists:
+            bookings = day_doc.reference.collection('bookings').stream()
+            for doc in bookings:
+                b = doc.to_dict()
+                b_s_time = b.get('start_time')
+                b_e_time = b.get('end_time')
+                if not b_s_time or not b_e_time: continue
+                
+                h_s, m_s = map(int, b_s_time.split(':'))
+                h_e, m_e = map(int, b_e_time.split(':'))
+                b_start_m = h_s * 60 + m_s
+                b_end_m = h_e * 60 + m_e
+                
+                overlap_start = max(b_start_m, 540)
+                overlap_end = min(b_end_m, 1080)
+                
+                if overlap_start < overlap_end:
+                    booked_minutes += (overlap_end - overlap_start)
+                    
+    if total_minutes_available == 0: return 0
+    return round((booked_minutes / total_minutes_available) * 100, 2)

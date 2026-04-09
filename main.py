@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
+from datetime import datetime
 import models
 
 app = Flask(__name__)
@@ -56,16 +57,22 @@ def root():
     my_bookings_all = []
     my_bookings_room = []
     filter_room_id = request.args.get('filter_room_id')
+    day_filter = request.args.get('day_filter')
+    day_filter_bookings = []
 
     if user:
         my_bookings_all = models.get_user_bookings(user['user_id'])
         if filter_room_id:
             my_bookings_room = models.get_user_bookings(user['user_id'], filter_room_id)
+        if day_filter:
+            day_filter_bookings = models.get_all_bookings_for_day(day_filter)
             
     return render_template('index.html', user=user, rooms=rooms, error=error_message, 
                            my_bookings_all=my_bookings_all, 
                            my_bookings_room=my_bookings_room, 
-                           filter_room_id=filter_room_id)
+                           filter_room_id=filter_room_id,
+                           day_filter=day_filter,
+                           day_filter_bookings=day_filter_bookings)
 
 @app.route('/edit_booking', methods=['GET', 'POST'])
 def edit_booking():
@@ -96,6 +103,23 @@ def edit_booking():
         return redirect(url_for('root'))
         
     return render_template('edit_booking.html', b=booking_data, error=error_message)
+
+@app.route('/room/<room_id>')
+def room_detail(room_id):
+    user = verify_token(request.cookies.get('token'))
+    if not user:
+        return redirect(url_for('root'))
+    
+    rooms = models.get_rooms()
+    room = next((r for r in rooms if r['id'] == room_id), None)
+    if not room: return redirect(url_for('root'))
+    
+    bookings = models.get_room_bookings(room_id)
+    
+    today_str = datetime.now().strftime('%Y-%m-%d')
+    occupancy = models.get_room_occupancy(room_id, today_str, 5)
+    
+    return render_template('room_detail.html', room=room, bookings=bookings, occupancy=occupancy, user=user)
 
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=8080, debug=True)
