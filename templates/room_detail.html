@@ -33,9 +33,48 @@
         <div class="card">
             <h1>{{ room.name }}</h1>
             
-            <div class="metric-box">
-                <div class="metric-value">{{ occupancy }}%</div>
-                <div class="metric-label">Occupancy (Next 5 Days tracking 09:00 - 18:00)</div>
+            <div style="display: flex; gap: 1rem; margin-bottom: 2rem;">
+                <div class="metric-box" style="flex: 1; margin-bottom: 0;">
+                    <div class="metric-value">{{ occupancy }}%</div>
+                    <div class="metric-label">Occupancy (Next 5 Days tracking 09:00 - 18:00)</div>
+                </div>
+                <div class="metric-box" style="flex: 1; margin-bottom: 0; background: linear-gradient(135deg, #059669 0%, #10b981 100%);">
+                    <div class="metric-value" style="font-size: 1.5rem; display: flex; align-items: center; justify-content: center; height: 50px;">
+                        {{ earliest_free }}
+                    </div>
+                    <div class="metric-label">Earliest Free Time</div>
+                </div>
+            </div>
+
+            <h2>5-Day Availability Calendar</h2>
+            <div style="display: flex; border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; background: white; margin-bottom: 2rem;">
+                <!-- Time Labels -->
+                <div style="width: 60px; border-right: 1px solid var(--border-color); background: #f9fafb;">
+                    <div style="height: 40px; border-bottom: 1px solid var(--border-color);"></div> <!-- Header spacer -->
+                    <div style="position: relative; height: 540px;">
+                        {% for h in range(9, 19) %}
+                        <div style="position: absolute; top: {{ (h - 9) * 60 }}px; left: 0; right: 0; padding-right: 8px; text-align: right; transform: translateY(-50%); font-size: 0.75rem; color: var(--text-secondary);">
+                            {{ "0" ~ h if h < 10 else h }}:00
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- Day Columns -->
+                {% for day in calendar_data %}
+                <div style="flex: 1; border-right: 1px solid var(--border-color); position: relative;">
+                    <div style="height: 40px; border-bottom: 1px solid var(--border-color); text-align: center; line-height: 40px; font-weight: 500; font-size: 0.85rem; background: #f9fafb;">
+                        {{ day.date }}
+                    </div>
+                    <div style="position: relative; height: 540px; background-image: linear-gradient(to bottom, transparent 59px, #e5e7eb 60px); background-size: 100% 60px;">
+                        {% for b in day.bookings %}
+                        <div style="position: absolute; top: {{ b.top }}px; height: {{ b.height }}px; left: 4px; right: 4px; background: rgba(79, 70, 229, 0.1); border-left: 4px solid var(--primary-color); border-radius: 4px; padding: 4px; font-size: 0.75rem; color: var(--primary-color); overflow: hidden; box-sizing: border-box; display: flex; align-items: center; justify-content: center; line-height: 1.2;">
+                            {{ b.label }}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
             </div>
             
             <h2>All Time Bookings for Room</h2>

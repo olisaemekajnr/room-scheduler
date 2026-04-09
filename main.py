@@ -118,8 +118,12 @@ def room_detail(room_id):
     
     today_str = datetime.now().strftime('%Y-%m-%d')
     occupancy = models.get_room_occupancy(room_id, today_str, 5)
+    earliest_free = models.get_earliest_free_time(room_id, today_str, 5)
+    calendar_data = models.get_calendar_data(room_id, today_str, 5)
     
-    return render_template('room_detail.html', room=room, bookings=bookings, occupancy=occupancy, user=user)
+    return render_template('room_detail.html', room=room, bookings=bookings, 
+                           occupancy=occupancy, earliest_free=earliest_free, 
+                           calendar_data=calendar_data, user=user)
 
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=8080, debug=True)

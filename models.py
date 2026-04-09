@@ -229,3 +229,86 @@ def get_room_occupancy(room_id, start_date_str, num_days=5):
                     
     if total_minutes_available == 0: return 0
     return round((booked_minutes / total_minutes_available) * 100, 2)
+
+def get_earliest_free_time(room_id, start_date_str, num_days=5):
+    start_dt = datetime.strptime(start_date_str, '%Y-%m-%d')
+    room_ref = db.collection('rooms').document(room_id)
+    
+    for i in range(num_days):
+        current_date_str = (start_dt + timedelta(days=i)).strftime('%Y-%m-%d')
+        day_doc = room_ref.collection('days').document(current_date_str).get()
+        
+        free_intervals = [[540, 1080]]
+        
+        if day_doc.exists:
+            bookings = []
+            for doc in day_doc.reference.collection('bookings').stream():
+                b = doc.to_dict()
+                if not b.get('start_time') or not b.get('end_time'): continue
+                h_s, m_s = map(int, b['start_time'].split(':'))
+                h_e, m_e = map(int, b['end_time'].split(':'))
+                bookings.append((h_s * 60 + m_s, h_e * 60 + m_e))
+                
+            bookings.sort(key=lambda x: x[0])
+            
+            for b_start, b_end in bookings:
+                new_intervals = []
+                for f_start, f_end in free_intervals:
+                    overlap_start = max(f_start, b_start)
+                    overlap_end = min(f_end, b_end)
+                    
+                    if overlap_start < overlap_end:
+                        if f_start < overlap_start:
+                            new_intervals.append([f_start, overlap_start])
+                        if overlap_end < f_end:
+                            new_intervals.append([overlap_end, f_end])
+                    else:
+                        new_intervals.append([f_start, f_end])
+                free_intervals = new_intervals
+                
+        if free_intervals:
+            earliest_m = free_intervals[0][0]
+            earliest_hour = earliest_m // 60
+            earliest_min = earliest_m % 60
+            return f"{current_date_str} at {earliest_hour:02d}:{earliest_min:02d}"
+            
+    return "No free time available"
+
+def get_calendar_data(room_id, start_date_str, num_days=5):
+    start_dt = datetime.strptime(start_date_str, '%Y-%m-%d')
+    room_ref = db.collection('rooms').document(room_id)
+    days_data = []
+    
+    for i in range(num_days):
+        current_date_str = (start_dt + timedelta(days=i)).strftime('%Y-%m-%d')
+        day_doc = room_ref.collection('days').document(current_date_str).get()
+        day_bookings = []
+        if day_doc.exists:
+            for doc in day_doc.reference.collection('bookings').stream():
+                b = doc.to_dict()
+                
+                b_s_time = b.get('start_time')
+                b_e_time = b.get('end_time')
+                if not b_s_time or not b_e_time: continue
+                
+                h_s, m_s = map(int, b_s_time.split(':'))
+                h_e, m_e = map(int, b_e_time.split(':'))
+                start_m = h_s * 60 + m_s
+                end_m = h_e * 60 + m_e
+                
+                overlap_start = max(start_m, 540)
+                overlap_end = min(end_m, 1080)
+                
+                if overlap_start < overlap_end:
+                    top_px = overlap_start - 540
+                    height_px = overlap_end - overlap_start
+                    day_bookings.append({
+                        'top': top_px,
+                        'height': height_px,
+                        'label': f"{b_s_time}-{b_e_time}"
+                    })
+        days_data.append({
+            'date': current_date_str,
+            'bookings': day_bookings
+        })
+    return days_data
