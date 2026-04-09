@@ -50,6 +50,25 @@
                 <button type="submit">Create Room</button>
             </form>
         </div>
+
+        <div class="card">
+            <h2>Book a Room</h2>
+            <form method="POST" action="/">
+                <input type="hidden" name="form_type" value="book_room">
+                <select name="room_id" required>
+                    <option value="" disabled selected>— Select Room —</option>
+                    {% for room in rooms %}
+                    <option value="{{ room.id }}">{{ room.name }}</option>
+                    {% endfor %}
+                </select>
+                <input type="date" name="booking_date" required>
+                <div style="display: flex; gap: 1rem; width: 100%;">
+                    <input type="time" name="start_time" required>
+                    <input type="time" name="end_time" required>
+                </div>
+                <button type="submit">Create Booking</button>
+            </form>
+        </div>
         {% else %}
         <div class="card" style="text-align: center;">
             <p style="color: var(--text-secondary);">Please sign in to view and book rooms.</p>

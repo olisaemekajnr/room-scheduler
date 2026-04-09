@@ -28,6 +28,15 @@ def root():
                 success = models.add_room(room_name, user['user_id'])
                 if not success:
                     error_message = "A room with that name already exists."
+        elif action == 'book_room':
+            room_id = request.form.get('room_id')
+            date_str = request.form.get('booking_date')
+            start_time = request.form.get('start_time')
+            end_time = request.form.get('end_time')
+            if room_id and date_str and start_time and end_time:
+                success, msg = models.add_booking(room_id, date_str, start_time, end_time, user['user_id'])
+                if not success:
+                    error_message = msg
         return redirect(url_for('root'))
         
     rooms = models.get_rooms()
