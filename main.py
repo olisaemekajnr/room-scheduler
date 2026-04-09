@@ -1,0 +1,37 @@
+from flask import Flask, render_template, request, redirect, url_for
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
+import models
+
+app = Flask(__name__)
+#app.secret_key = 'super_secret_session_key'
+
+def verify_token(token):
+    if not token:
+        return None
+    try:
+        req = google_requests.Request()
+        return id_token.verify_firebase_token(token, req)
+    except Exception:
+        return None
+
+@app.route('/', methods=['GET', 'POST'])
+def root():
+    user = verify_token(request.cookies.get('token'))
+    error_message = None
+    
+    if request.method == 'POST' and user:
+        action = request.form.get('form_type')
+        if action == 'add_room':
+            room_name = request.form.get('room_name', '').strip()
+            if room_name:
+                success = models.add_room(room_name, user['user_id'])
+                if not success:
+                    error_message = "A room with that name already exists."
+        return redirect(url_for('root'))
+        
+    rooms = models.get_rooms()
+    return render_template('index.html', user=user, rooms=rooms, error=error_message)
+
+if __name__ == '__main__':
+    app.run(host='127.0.0.1', port=8080, debug=True)
