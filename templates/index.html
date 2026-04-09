@@ -69,6 +69,80 @@
                 <button type="submit">Create Booking</button>
             </form>
         </div>
+
+        <div class="card">
+            <h2>My Bookings (All Rooms)</h2>
+            {% if my_bookings_all %}
+            <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                <tr style="border-bottom: 2px solid var(--border-color);">
+                    <th style="padding: 0.5rem;">Room</th>
+                    <th style="padding: 0.5rem;">Date</th>
+                    <th style="padding: 0.5rem;">Time</th>
+                    <th style="padding: 0.5rem;">Action</th>
+                </tr>
+                {% for b in my_bookings_all %}
+                <tr style="border-bottom: 1px solid rgba(0,0,0,0.05);">
+                    <td style="padding: 0.5rem;">{{ b.room_name }}</td>
+                    <td style="padding: 0.5rem;">{{ b.day_id }}</td>
+                    <td style="padding: 0.5rem;">{{ b.start_time }} - {{ b.end_time }}</td>
+                    <td style="padding: 0.5rem;">
+                        <form method="POST" action="/" style="display:inline;">
+                            <input type="hidden" name="form_type" value="delete_booking">
+                            <input type="hidden" name="room_id" value="{{ b.room_id }}">
+                            <input type="hidden" name="day_id" value="{{ b.day_id }}">
+                            <input type="hidden" name="booking_id" value="{{ b.booking_id }}">
+                            <button type="submit" class="danger" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+            {% else %}
+            <p style="color: var(--text-secondary);">You have no bookings.</p>
+            {% endif %}
+        </div>
+
+        <div class="card">
+            <h2>My Bookings for a Specific Room</h2>
+            <form method="GET" action="/" style="margin-bottom: 1.5rem; display: flex; gap: 1rem;">
+                <select name="filter_room_id" required style="margin-bottom: 0;">
+                    <option value="" disabled selected>— Select Room —</option>
+                    {% for room in rooms %}
+                    <option value="{{ room.id }}" {% if filter_room_id == room.id %}selected{% endif %}>{{ room.name }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" style="white-space: nowrap;">Filter</button>
+            </form>
+            
+            {% if filter_room_id %}
+                {% if my_bookings_room %}
+                <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                    <tr style="border-bottom: 2px solid var(--border-color);">
+                        <th style="padding: 0.5rem;">Date</th>
+                        <th style="padding: 0.5rem;">Time</th>
+                        <th style="padding: 0.5rem;">Action</th>
+                    </tr>
+                    {% for b in my_bookings_room %}
+                    <tr style="border-bottom: 1px solid rgba(0,0,0,0.05);">
+                        <td style="padding: 0.5rem;">{{ b.day_id }}</td>
+                        <td style="padding: 0.5rem;">{{ b.start_time }} - {{ b.end_time }}</td>
+                        <td style="padding: 0.5rem;">
+                            <form method="POST" action="/" style="display:inline;">
+                                <input type="hidden" name="form_type" value="delete_booking">
+                                <input type="hidden" name="room_id" value="{{ b.room_id }}">
+                                <input type="hidden" name="day_id" value="{{ b.day_id }}">
+                                <input type="hidden" name="booking_id" value="{{ b.booking_id }}">
+                                <button type="submit" class="danger" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+                {% else %}
+                <p style="color: var(--text-secondary);">You have no bookings for this room.</p>
+                {% endif %}
+            {% endif %}
+        </div>
         {% else %}
         <div class="card" style="text-align: center;">
             <p style="color: var(--text-secondary);">Please sign in to view and book rooms.</p>

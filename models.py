@@ -34,9 +34,6 @@ def get_rooms():
     return rooms
 
 def add_booking(room_id, date_str, start_time, end_time, user_id):
-    """
-    Creates a booking on a specific room and day. Validation ensures no overlap.
-    """
     if start_time >= end_time:
         return False, "Start time must be before end time."
 
@@ -46,13 +43,11 @@ def add_booking(room_id, date_str, start_time, end_time, user_id):
     if not room_snap.exists:
         return False, "Room doesn't exist."
         
-    # Link explicitly by having Day documents inside the days subcollection
     day_ref = room_ref.collection('days').document(date_str)
     day_ref.set({'date': date_str}, merge=True)
     
     bookings_ref = day_ref.collection('bookings')
     
-    # Clash detection logic performed application-side to avoid creating unpermitted custom indexes
     existing_bookings = bookings_ref.stream()
     
     for doc in existing_bookings:
@@ -60,12 +55,9 @@ def add_booking(room_id, date_str, start_time, end_time, user_id):
         b_start = b.get('start_time')
         b_end = b.get('end_time')
         
-        # Overlap happens if the new booking starts before the existing one ends
-        # AND the new booking ends after the existing one starts
         if start_time < b_end and end_time > b_start:
             return False, f"This overlaps with an existing booking ({b_start} - {b_end})."
 
-    # Save the booking to the subcollection
     bookings_ref.add({
         'room_id': room_id,
         'room_name': room_snap.to_dict().get('name', 'Unknown'),
@@ -76,3 +68,36 @@ def add_booking(room_id, date_str, start_time, end_time, user_id):
     })
     
     return True, "Booking successful."
+
+def get_user_bookings(user_id, filter_room_id=None):
+    results = []
+    
+    if filter_room_id:
+        room_refs = [db.collection('rooms').document(filter_room_id)]
+    else:
+        # Get all rooms to iterate over their subcollections
+        # Python-side filtering is necessary to avoid requiring a custom composite index
+        room_refs = [doc.reference for doc in db.collection('rooms').stream()]
+
+    for room_ref in room_refs:
+        days = room_ref.collection('days').stream()
+        for day_doc in days:
+            # Single-field equality filter works automatically without a custom composite index
+            bookings = day_doc.reference.collection('bookings').where('created_by', '==', user_id).stream()
+            for b_doc in bookings:
+                b_data = b_doc.to_dict()
+                b_data['booking_id'] = b_doc.id
+                results.append(b_data)
+                
+    # Sort bookings chronologically
+    results.sort(key=lambda x: (x.get('day_id', ''), x.get('start_time', '')))
+    return results
+
+def delete_booking(room_id, day_id, booking_id, user_id):
+    booking_ref = db.collection('rooms').document(room_id).collection('days').document(day_id).collection('bookings').document(booking_id)
+    b_snap = booking_ref.get()
+    # Check permissions before deleting
+    if b_snap.exists and b_snap.to_dict().get('created_by') == user_id:
+        booking_ref.delete()
+        return True
+    return False

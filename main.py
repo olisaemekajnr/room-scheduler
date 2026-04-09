@@ -37,10 +37,29 @@ def root():
                 success, msg = models.add_booking(room_id, date_str, start_time, end_time, user['user_id'])
                 if not success:
                     error_message = msg
+        elif action == 'delete_booking':
+            room_id = request.form.get('room_id')
+            day_id = request.form.get('day_id')
+            booking_id = request.form.get('booking_id')
+            if room_id and day_id and booking_id:
+                models.delete_booking(room_id, day_id, booking_id, user['user_id'])
         return redirect(url_for('root'))
         
     rooms = models.get_rooms()
-    return render_template('index.html', user=user, rooms=rooms, error=error_message)
+    
+    my_bookings_all = []
+    my_bookings_room = []
+    filter_room_id = request.args.get('filter_room_id')
+
+    if user:
+        my_bookings_all = models.get_user_bookings(user['user_id'])
+        if filter_room_id:
+            my_bookings_room = models.get_user_bookings(user['user_id'], filter_room_id)
+            
+    return render_template('index.html', user=user, rooms=rooms, error=error_message, 
+                           my_bookings_all=my_bookings_all, 
+                           my_bookings_room=my_bookings_room, 
+                           filter_room_id=filter_room_id)
 
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=8080, debug=True)
