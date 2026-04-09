@@ -43,6 +43,12 @@ def root():
             booking_id = request.form.get('booking_id')
             if room_id and day_id and booking_id:
                 models.delete_booking(room_id, day_id, booking_id, user['user_id'])
+        elif action == 'delete_room':
+            room_id = request.form.get('room_id')
+            if room_id:
+                success, msg = models.delete_room(room_id, user['user_id'])
+                if not success:
+                    error_message = msg
         return redirect(url_for('root'))
         
     rooms = models.get_rooms()
@@ -60,6 +66,36 @@ def root():
                            my_bookings_all=my_bookings_all, 
                            my_bookings_room=my_bookings_room, 
                            filter_room_id=filter_room_id)
+
+@app.route('/edit_booking', methods=['GET', 'POST'])
+def edit_booking():
+    user = verify_token(request.cookies.get('token'))
+    if not user:
+        return redirect(url_for('root'))
+        
+    room_id = request.args.get('room_id') or request.form.get('room_id')
+    day_id = request.args.get('day_id') or request.form.get('old_day_id')
+    booking_id = request.args.get('booking_id') or request.form.get('booking_id')
+    
+    error_message = None
+
+    if request.method == 'POST':
+        new_day = request.form.get('booking_date')
+        new_start = request.form.get('start_time')
+        new_end = request.form.get('end_time')
+        
+        if room_id and day_id and booking_id and new_day and new_start and new_end:
+            success, msg = models.update_booking(room_id, day_id, booking_id, new_day, new_start, new_end, user['user_id'])
+            if success:
+                return redirect(url_for('root'))
+            else:
+                error_message = msg
+                
+    booking_data = models.get_booking(room_id, day_id, booking_id)
+    if not booking_data or booking_data.get('created_by') != user['user_id']:
+        return redirect(url_for('root'))
+        
+    return render_template('edit_booking.html', b=booking_data, error=error_message)
 
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=8080, debug=True)

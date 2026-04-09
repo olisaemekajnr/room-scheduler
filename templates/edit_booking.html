@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Booking - Room Scheduler</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Edit Booking</h1>
+
+        {% if error %}
+        <div class="error-message">
+            {{ error }}
+        </div>
+        {% endif %}
+
+        <div class="card">
+            <h2>{{ b.room_name }}</h2>
+            <form method="POST" action="/edit_booking">
+                <input type="hidden" name="room_id" value="{{ b.room_id }}">
+                <input type="hidden" name="old_day_id" value="{{ b.day_id }}">
+                <input type="hidden" name="booking_id" value="{{ b.booking_id }}">
+                
+                <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary);">Date</label>
+                <input type="date" name="booking_date" value="{{ b.day_id }}" required>
+                
+                <div style="display: flex; gap: 1rem; width: 100%; margin-top: 1rem;">
+                    <div style="flex: 1;">
+                        <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary);">Start Time</label>
+                        <input type="time" name="start_time" value="{{ b.start_time }}" required>
+                    </div>
+                    <div style="flex: 1;">
+                        <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary);">End Time</label>
+                        <input type="time" name="end_time" value="{{ b.end_time }}" required>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="submit" style="flex: 1;">Save Changes</button>
+                    <a href="/" style="flex: 1;">
+                        <button type="button" class="danger" style="width: 100%;">Cancel</button>
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

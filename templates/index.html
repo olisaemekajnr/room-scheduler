@@ -32,8 +32,15 @@
             {% if rooms %}
             <ul class="room-list">
                 {% for room in rooms %}
-                <li>
+                <li style="display: flex; justify-content: space-between; align-items: center;">
                     <span class="room-name">{{ room.name }}</span>
+                    {% if room.created_by == user.user_id %}
+                    <form method="POST" action="/" style="display:inline; margin: 0;" onsubmit="return confirm('Definitively delete this room? This will fail if there are active bookings.');">
+                        <input type="hidden" name="form_type" value="delete_room">
+                        <input type="hidden" name="room_id" value="{{ room.id }}">
+                        <button type="submit" class="danger" style="margin-top: 0; padding: 0.3rem 0.6rem; font-size: 0.8rem;">Delete Room</button>
+                    </form>
+                    {% endif %}
                 </li>
                 {% endfor %}
             </ul>
@@ -86,6 +93,7 @@
                     <td style="padding: 0.5rem;">{{ b.day_id }}</td>
                     <td style="padding: 0.5rem;">{{ b.start_time }} - {{ b.end_time }}</td>
                     <td style="padding: 0.5rem;">
+                        <a href="/edit_booking?room_id={{ b.room_id }}&day_id={{ b.day_id }}&booking_id={{ b.booking_id }}" style="margin-right: 0.8rem; color: var(--primary-color); font-weight: 500; font-size: 0.9rem; text-decoration: none;">Edit</a>
                         <form method="POST" action="/" style="display:inline;">
                             <input type="hidden" name="form_type" value="delete_booking">
                             <input type="hidden" name="room_id" value="{{ b.room_id }}">
@@ -127,6 +135,7 @@
                         <td style="padding: 0.5rem;">{{ b.day_id }}</td>
                         <td style="padding: 0.5rem;">{{ b.start_time }} - {{ b.end_time }}</td>
                         <td style="padding: 0.5rem;">
+                            <a href="/edit_booking?room_id={{ b.room_id }}&day_id={{ b.day_id }}&booking_id={{ b.booking_id }}" style="margin-right: 0.8rem; color: var(--primary-color); font-weight: 500; font-size: 0.9rem; text-decoration: none;">Edit</a>
                             <form method="POST" action="/" style="display:inline;">
                                 <input type="hidden" name="form_type" value="delete_booking">
                                 <input type="hidden" name="room_id" value="{{ b.room_id }}">
